@@ -10,15 +10,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch("/activities");
       const activities = await response.json();
 
-      // Clear loading message
+      // Clear loading message and activity select to avoid duplicates
       activitiesList.innerHTML = "";
+      activitySelect.innerHTML = `<option value="">-- Select an activity --</option>`;
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
 
-        const spotsLeft = details.max_participants - details.participants.length;
+        const participantsArr = Array.isArray(details.participants) ? details.participants : [];
+        const spotsLeft = details.max_participants - participantsArr.length;
 
         activityCard.innerHTML = `
           <h4>${name}</h4>
@@ -27,6 +29,26 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
         `;
 
+        // Participants list (created with DOM methods to avoid raw-html injection)
+        const participantsContainer = document.createElement("div");
+        if (participantsArr.length) {
+          const ul = document.createElement("ul");
+          ul.className = "participants-list";
+          participantsArr.forEach((p) => {
+            const li = document.createElement("li");
+            li.className = "participant";
+            li.textContent = p;
+            ul.appendChild(li);
+          });
+          participantsContainer.appendChild(ul);
+        } else {
+          const pEl = document.createElement("p");
+          pEl.className = "no-participants";
+          pEl.textContent = "No participants yet";
+          participantsContainer.appendChild(pEl);
+        }
+
+        activityCard.appendChild(participantsContainer);
         activitiesList.appendChild(activityCard);
 
         // Add option to select dropdown
